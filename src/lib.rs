@@ -1,3 +1,5 @@
+pub mod utils;
+
 #[derive(Debug, PartialEq)]
 pub struct Number(pub i32);
 
@@ -31,6 +33,24 @@ impl Operator {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct Expression {
+    pub left: Number,
+    pub right: Number,
+    pub op: Operator
+}
+
+impl Expression {
+    fn create(expression_string:&str) -> Self {
+        Self {
+            left:Number::create(expression_string),
+            right:Number::create(expression_string),
+            op:Operator::create(expression_string)
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -59,4 +79,11 @@ mod tests {
     fn parse_operator_mul() {
         assert_eq!(Operator::create("*"),Operator(OperatorEnum::Multiply));
     }
+
+    #[test]
+    #[should_panic(expected = "Invalid Operator!")]
+    fn parse_operator_panic() {
+        assert_eq!(Operator::create("AmongUs"),Operator(OperatorEnum::Add));
+    }
+
 }
