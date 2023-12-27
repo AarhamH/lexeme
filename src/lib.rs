@@ -47,10 +47,14 @@ pub struct Expression {
 
 impl Expression {
     pub fn new(s: &str) -> (&str, Self) {
-        let (s, left) = Number::create(s);
-        let (s, op) = Operator::create(s);
-        let (s, right) = Number::create(s);
+        let (s, left) = Number::create(s); 
+        let (s,_) = utils::extract_whitespace(s);
 
+        let (s, op) = Operator::create(s);
+        let (s,_) = utils::extract_whitespace(s);
+
+        let (s, right) = Number::create(s);
+        
         (s, Self { left, right, op })
     }
 }
@@ -101,4 +105,18 @@ mod tests {
         );
     }
 
+    #[test]
+    fn parse_one_plus_two_with_spaces() {
+        assert_eq!(
+            Expression::new("1       +  2"),
+            (
+                "",
+                Expression {
+                    left: Number(1),
+                    right: Number(2),
+                    op: Operator(OperatorEnum::Add),
+                },
+            ),
+        );
+    }
 }
