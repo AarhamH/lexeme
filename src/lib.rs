@@ -1,122 +1,71 @@
-pub mod utils;
+pub mod expression;
+mod utils;
 
-#[derive(Debug, PartialEq)]
-pub struct Number(pub i32);
+use crate::expression::Expression;
 
-impl Number {
-    pub fn create(num_string:&str) -> (&str,Self){  
-        let(num_string, number) = utils::extract_nums(num_string);
-        (num_string, Self(number.parse().unwrap()))
-    }
+#[derive(Debug,PartialEq)]
+pub struct BindingDef {
+    name: String,
+    value: Expression
 }
 
-#[derive(Debug, PartialEq)]
-pub enum OperatorEnum {
-    Add,
-    Subtract,
-    Divide,
-    Multiply
-}
+impl BindingDef {
+    pub fn create(line_string:&str) -> (&str,Self) {
 
-#[derive(Debug, PartialEq)]
-pub struct Operator(pub OperatorEnum);
+        // check for declarative string, if exists, strip it off the og string
+        let line_string = if line_string.starts_with("let") {
+            &line_string[3..]
+        }
+        else {
+            panic!("Expected line to start with let")
+        };
+        let (line_string, _) = utils::extract_whitespace(line_string);
 
+        let (line_string, name) = utils::extract_identifier(line_string);
+        let (line_string, _) = utils::extract_whitespace(line_string);
 
-impl Operator {
-    pub fn create(op_string:&str) -> (&str,Self) {
-        let (op_string, op) = utils::extract_op(op_string);
-        let op = match op {
-            "+" => Self(OperatorEnum::Add),
-            "-" => Self(OperatorEnum::Subtract),
-            "/" => Self(OperatorEnum::Divide),
-            "*" => Self(OperatorEnum::Multiply),
-            _ => unreachable!(),
-
+        let line_string = if line_string.starts_with('=') {
+            &line_string[1..]
+        }
+        else {
+            panic!("No equals sign")
         };
 
-        (op_string,op)
+        let (line_string,_) = utils::extract_whitespace(line_string);
+
+        let (line_string, value) = Expression::new(line_string);
+
+        (
+            line_string,
+            Self {
+                name: name.to_string(),
+                value,
+            }
+        )
     }
 }
-
-#[derive(Debug, PartialEq)]
-pub struct Expression {
-    pub left: Number,
-    pub right: Number,
-    pub op: Operator
-}
-
-impl Expression {
-    pub fn new(s: &str) -> (&str, Self) {
-        let (s, left) = Number::create(s); 
-        let (s,_) = utils::extract_whitespace(s);
-
-        let (s, op) = Operator::create(s);
-        let (s,_) = utils::extract_whitespace(s);
-
-        let (s, right) = Number::create(s);
-        
-        (s, Self { left, right, op })
-    }
-}
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::expression::{Number,Operator, OperatorEnum};
 
     #[test]
-    fn parse_number() {
-        assert_eq!(Number::create("123"),("",Number(123)));
-    }
-
-    #[test]
-    fn parse_operator_plus() {
-        assert_eq!(Operator::create("+"),("",Operator(OperatorEnum::Add)));
-    }
-
-    #[test]
-
-    fn parse_operator_minus() { 
-        assert_eq!(Operator::create("-"),("",Operator(OperatorEnum::Subtract)));
-    }
-
-    #[test]
-    fn parse_operator_div() {
-        assert_eq!(Operator::create("/"),("", Operator(OperatorEnum::Divide)));
-    }
-
-    #[test]
-    fn parse_operator_mul() {
-        assert_eq!(Operator::create("*"),("", Operator(OperatorEnum::Multiply)));
-    }
-
-    #[test]
-    fn parse_one_plus_two() {
+    fn parse_binding_def() {
         assert_eq!(
-            Expression::new("1+2"),
+            BindingDef::create("let a = 10/2"),
             (
                 "",
-                Expression {
-                    left: Number(1),
-                    right: Number(2),
-                    op: Operator(OperatorEnum::Add),
-                },
-            ),
-        );
+                BindingDef {
+                    name: "a".to_string(),
+                    value: Expression {
+                        left: Number(10),
+                        right: Number(2),
+                        op: Operator(OperatorEnum::Divide)
+                    }
+                }
+            )
+        )
     }
-
-    #[test]
-    fn parse_one_plus_two_with_spaces() {
-        assert_eq!(
-            Expression::new("1       +  2"),
-            (
-                "",
-                Expression {
-                    left: Number(1),
-                    right: Number(2),
-                    op: Operator(OperatorEnum::Add),
-                },
-            ),
-        );
-    }
+    
 }
+
