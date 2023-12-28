@@ -32,6 +32,14 @@ pub(crate) fn extract_identifier(s:&str) -> (&str,&str) {
     }
 }
 
+pub(crate) fn extract_tags <'a,'b> (start:&'a str, decl:&'b str) -> &'b str {
+    if decl.starts_with(start) {
+        &decl[start.len()..]
+    }
+    else {
+        panic!("Expected {} at the begining", start);
+     }
+}
 
 
 
@@ -86,5 +94,11 @@ mod tests {
    #[test]
     fn extract_ind_from_fn_w_nums2() {
         assert_eq!(extract_identifier("123abc"), ("123abc", ""));
+    }
+
+   
+   #[test]
+    fn extract_tag_let() {
+        assert_eq!(extract_tags("let", "let foo"), " foo");
     }
 }

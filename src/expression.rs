@@ -1,4 +1,4 @@
-use crate::utils;
+use crate::{utils, value::Value};
 
 #[derive(Debug, PartialEq)]
 pub struct Number(pub i32);
@@ -46,7 +46,7 @@ pub struct Expression {
 }
 
 impl Expression {
-    pub fn new(s: &str) -> (&str, Self) {
+    pub fn create(s: &str) -> (&str, Self) {
         let (s, left) = Number::create(s); 
         let (s,_) = utils::extract_whitespace(s);
 
@@ -57,6 +57,20 @@ impl Expression {
         
         (s, Self { left, right, op })
     }
+
+    pub(crate) fn evaluate(&self) -> Value {
+        let Number(left) = self.left;
+        let Number(right) = self.right;
+
+        let res = match self.op {
+            Operator(OperatorEnum::Add) => left + right,
+            Operator(OperatorEnum::Subtract) => left - right,
+            Operator(OperatorEnum::Multiply) => left * right,
+            Operator(OperatorEnum::Divide) => left / right,
+        };
+
+        Value::Number(res)
+    }   
 }
 
 
@@ -93,7 +107,7 @@ mod tests {
     #[test]
     fn parse_one_plus_two() {
         assert_eq!(
-            Expression::new("1+2"),
+            Expression::create("1+2"),
             (
                 "",
                 Expression {
@@ -108,7 +122,7 @@ mod tests {
     #[test]
     fn parse_one_plus_two_with_spaces() {
         assert_eq!(
-            Expression::new("1       +  2"),
+            Expression::create("1       +  2"),
             (
                 "",
                 Expression {
@@ -117,6 +131,57 @@ mod tests {
                     op: Operator(OperatorEnum::Add),
                 },
             ),
+        );
+    }
+        #[test]
+    fn evaluate_add() {
+        assert_eq!(
+            Expression {
+                left: Number(10),
+                right: Number(10),
+                op: Operator(OperatorEnum::Add),
+            }
+            .evaluate(),
+            Value::Number(20),
+        );
+    }
+
+    #[test]
+    fn evaluate_sub() {
+        assert_eq!(
+            Expression {
+                left: Number(1),
+                right: Number(5),
+                op: Operator(OperatorEnum::Subtract)
+            }
+            .evaluate(),
+            Value::Number(-4),
+        );
+    }
+
+    #[test]
+    fn evaluate_mul() {
+        assert_eq!(
+            Expression {
+                left: Number(5),
+                right: Number(6),
+                op: Operator(OperatorEnum::Multiply),
+            }
+            .evaluate(),
+            Value::Number(30),
+        );
+    }
+
+    #[test]
+    fn evaluate_div() {
+        assert_eq!(
+            Expression {
+                left: Number(200),
+                right: Number(20),
+                op: Operator(OperatorEnum::Divide),
+            }
+            .evaluate(),
+            Value::Number(10),
         );
     }
 }
